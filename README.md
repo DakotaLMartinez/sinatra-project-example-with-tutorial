@@ -23,13 +23,9 @@ In order to implement Authentication in Sinatra, we're going to need to address 
 - eventually we'll have to load our 2 controllers within the `config.ru` file as well
 - (✔) we'll need to add the `method_override` so that we're able to send a delete request for `/logout`
 ## Database
-- Users table with a column `password_digest` and some other column to find a user by (email or username)
+- (✔) Users table with a column `password_digest` and some other column to find a user by (email or username)
 ## Models
-- User model that inherits from `ActiveRecord::Base` and invokes the `has_secure_password` macro.
-## Views
-- view with registration form for creating a new account
-- view with login form for logging into an existing account
-- navigation links in `layout.erb` for authenication (conditional logic for displaying a logout button)
+- (✔) User model that inherits from `ActiveRecord::Base` and invokes the `has_secure_password` macro.
 ## Controllers
 - `SessionsController` for logging in and out
 - `UsersController` for creating new accounts
@@ -39,16 +35,11 @@ In order to implement Authentication in Sinatra, we're going to need to address 
 - `delete '/logout` for handling a logout button click.
 - `get '/users/new'` for rendering the registration form
 - `post '/users` for handling the registration form submission.
+## Views
+- view with registration form for creating a new account
+- view with login form for logging into an existing account
+- navigation links in `layout.erb` for authenication (conditional logic for displaying a logout button)
 
-## Has Secure Password
-has_secure_password important methods:
-- `password=(password)` this method takes an argument of a password (unencrypted) and uses it to create a new hashes and salted (encrypted) password which is an instance of the `BCrypt::Password` class.
-- `authenticate(test_password)` extracts the salt from the stored (encrypted) password and uses it to create a new password using `test_password` if those are the same it returns the user (truthy) and if they're not it returns `false`
-
-`password=` gets called when you create a new user:
-```ruby
-User.new(email: params[:email], password: params[:password])
-```
 
 # How to Follow along
 
@@ -147,4 +138,22 @@ Next, run
 
 ```
 rake db:migrate
+```
+
+Finally, in the `User` model, let's invoke the `has_secure_password` macro:
+
+```ruby
+class User < ActiveRecord::Base
+  has_secure_password
+end
+```
+
+## Has Secure Password
+has_secure_password important methods:
+- `password=(password)` this method takes an argument of a password (unencrypted) and uses it to create a new hashes and salted (encrypted) password which is an instance of the `BCrypt::Password` class.
+- `authenticate(test_password)` extracts the salt from the stored (encrypted) password and uses it to create a new password using `test_password` if those are the same it returns the user (truthy) and if they're not it returns `false`
+
+`password=` gets called when you create a new user:
+```ruby
+User.new(email: params[:email], password: params[:password])
 ```
