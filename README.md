@@ -28,15 +28,15 @@ In order to implement Authentication in Sinatra, we're going to need to address 
 - (✔) User model that inherits from `ActiveRecord::Base` and invokes the `has_secure_password` macro.
 ## Controllers
 - `SessionsController` for logging in and out
-- `UsersController` for creating new accounts
+- (✔) `UsersController` for creating new accounts
 ## Routes
 - `get '/login'` for rendering the log in form
 - `post '/login'` for handling the log in form submission
 - `delete '/logout` for handling a logout button click.
-- `get '/users/new'` for rendering the registration form
-- `post '/users` for handling the registration form submission.
+- (✔) `get '/users/new'` for rendering the registration form
+- (✔) `post '/users` for handling the registration form submission.
 ## Views
-- view with registration form for creating a new account
+- (✔) view with registration form for creating a new account
 - view with login form for logging into an existing account
 - navigation links in `layout.erb` for authenication (conditional logic for displaying a logout button)
 
@@ -156,4 +156,78 @@ has_secure_password important methods:
 `password=` gets called when you create a new user:
 ```ruby
 User.new(email: params[:email], password: params[:password])
+```
+
+## Creating our Controllers and Routes for Registration
+
+Create a file called `users_controller.rb` and add the following content:
+
+```ruby
+# app/controllers/users_controller.rb
+class UsersController < ApplicationController 
+
+  get '/users/new' do 
+    # render the form to create a user account
+    erb :'/users/new'
+  end 
+
+  post '/users' do 
+
+  end
+end
+```
+
+We also need to make sure that our Sinatra app knows to use this controller to respond to incoming requests. To do that we'll have to add a line to the bottom of our `config.ru` file:
+
+```ruby
+# config.ru
+require './config/environment'
+
+if ActiveRecord::Migrator.needs_migration?
+  raise 'Migrations are pending. Run `rake db:migrate` to resolve the issue.'
+end
+
+run ApplicationController
+use UsersController
+```
+
+To try this out in the browser, we'll also need a view to render the form. Create a folder app/views/users and then a file inside of it called new.erb:
+
+```html
+<!-- app/views/users/new.erb -->
+<h1>Sign Up</h1>
+<form method="post" action="/users">
+  <p>
+    <div><label for="email">Email</label></div>
+    <input type="email" name="email" id="email" />
+  </p>
+  <p>
+    <div><label for="password">Password</label></div>
+    <input type="password" name="password" id="password" />
+  </p>
+  <input type="submit" value="Sign Up"/>
+</form>
+```
+
+Let's update our controller to handle the form submission:
+
+```ruby
+# app/controllers/users_controller.rb
+class UsersController < ApplicationController 
+
+  get '/users/new' do 
+    # render the form to create a user account
+    erb :'users/new'
+  end 
+
+  post '/users' do 
+    @user = User.new(email: params[:email], password: params[:password])
+    if @user.save
+      session[:id] = @user.id
+      redirect "/"
+    else 
+      erb :'users/new'
+    end
+  end
+end
 ```
