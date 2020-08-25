@@ -10,25 +10,26 @@ In order to implement Authentication in Sinatra, we're going to need to address 
 7. Use the methods from `has_secure_password` to create user accounts and authenticate them later, storing the user's ID in session cookies using the `session` hash in our controllers.
 
 ## Dependencies (Gems/packages)
-'activerecord'
-'bcrypt'
-'dotenv'
-'session_secret_generator'
+- 'activerecord'
+- 'bcrypt'
+- 'dotenv'
+- 'session_secret_generator'
 ## Configuration (environment variables/other stuff in config folder)
 - enable sessions in the controller
 - set session secret in controller to `ENV['SESSION_SECRET']`
-- create `SESSION_SECRET` in a file called .env
+- create `SESSION_SECRET` in a file called `.env`
 - load the varibles in the `.env` file using `Dotenv.load` in `config/environment`.
 - to test this is working, open `bundle exec tux` and type in `ENV['SESSION_SECRET']` You should see the value inside of the `.env` file.
 - eventually we'll have to load our 2 controllers within the `config.ru` file as well
+- we'll need to add the `method_override` so that we're able to send a delete request for `/logout`
 ## Database
-Users table with a column `password_digest` and some other column to find a user by (email or username)
+- Users table with a column `password_digest` and some other column to find a user by (email or username)
 ## Models
-User model that inherits from `ActiveRecord::Base` and invokes the `has_secure_password` macro.
+- User model that inherits from `ActiveRecord::Base` and invokes the `has_secure_password` macro.
 ## Views
 - view with registration form for creating a new account
 - view with login form for logging into an existing account
-- navigation links in layout.erb for authenication (conditional logic for displaying a logout button)
+- navigation links in `layout.erb` for authenication (conditional logic for displaying a logout button)
 ## Controllers
 - `SessionsController` for logging in and out
 - `UsersController` for creating new accounts
@@ -37,4 +38,14 @@ User model that inherits from `ActiveRecord::Base` and invokes the `has_secure_p
 - `post '/login'` for handling the log in form submission
 - `delete '/logout` for handling a logout button click.
 - `get '/users/new'` for rendering the registration form
-- `post '/users/` for handling the registration form submission.
+- `post '/users` for handling the registration form submission.
+
+## Has Secure Password
+has_secure_password important methods:
+- `password=(password)` this method takes an argument of a password (unencrypted) and uses it to create a new hashes and salted (encrypted) password which is an instance of the `BCrypt::Password` class.
+- `authenticate(test_password)` extracts the salt from the stored (encrypted) password and uses it to create a new password using `test_password` if those are the same it returns the user (truthy) and if they're not it returns `false`
+
+`password=` gets called when you create a new user:
+```ruby
+User.new(email: params[:email], password: params[:password])
+```
