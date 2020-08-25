@@ -49,3 +49,18 @@ has_secure_password important methods:
 ```ruby
 User.new(email: params[:email], password: params[:password])
 ```
+
+# How to Follow along
+
+```
+corneal new authentication_codealong
+```
+
+add to Gemfile:
+```ruby
+group :development, :test do 
+  gem 'dotenv'
+  gem 'session_secret_generator'
+end
+```
+
