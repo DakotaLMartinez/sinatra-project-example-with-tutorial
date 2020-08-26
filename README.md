@@ -231,3 +231,66 @@ class UsersController < ApplicationController
   end
 end
 ```
+
+## Creating our Controllers and Routes for Login
+
+1. Create a `sessions_controller.rb` file
+2. Add `use SessionsController` to the bottom of `config.ru`
+3. Add routes to render the login form and handle the submission
+4. Add login view template.
+
+```ruby
+# app/controllers/sessions_controller.rb
+class SessionsController < ApplicationController
+  get '/login' do 
+    erb :'/sessions/login'
+  end
+
+  post '/login' do 
+
+  end
+end
+```
+
+Create a views directory for sessions: `app/views/sessions` inside the folder we create a template for the login form: `login.erb`
+
+```html
+<!-- app/views/sessions/login.erb -->
+<h1>Log In</h1>
+<%= @error %>
+<form method="post" action="/login">
+  <p>
+    <div><label for="email">Email</label></div>
+    <input type="email" name="email" id="email" />
+  </p>
+  <p>
+    <div><label for="password">Password</label></div>
+    <input type="password" name="password" id="password" />
+  </p>
+  <input type="submit" value="Sign In"/>
+</form>
+```
+
+Then we need to fill in our controller to handle the form submission:
+
+```ruby
+# app/controllers/sessions_controller.rb
+class SessionsController < ApplicationController
+  get '/login' do 
+    erb :'/sessions/login'
+  end
+
+  post '/login' do 
+    # find the user by their email:
+    user = User.find_by_email(params[:email])
+    # if they typed in the right password then log them in, if not show them the form again
+    if user && user.authenticate(params[:password]) 
+      session[:id] = user.id
+      redirect "/"
+    else 
+      @error = "Incorrect email or password"
+      erb :'/sessions/login'
+    end
+  end
+end
+```
