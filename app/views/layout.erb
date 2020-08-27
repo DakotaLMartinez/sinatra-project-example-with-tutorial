@@ -15,7 +15,17 @@
   </head>
   <body>
     <div class="wrapper">
-
+      <nav>
+        <% if !logged_in? %>
+          <a href="/login">Log In</a>
+          <a href="/users/new">Sign Up</a>
+        <% else %>
+          <form method="post" action="/logout">
+            <input type="hidden" name="_method" value="delete" />
+            <input type="submit" value="Log Out" />
+          </form>
+        <% end %>
+      </nav>
         <%= yield %>
 
       <footer class="branding">
