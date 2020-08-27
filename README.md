@@ -470,8 +470,41 @@ config.ru needs to `use` our new controller `PostsController`
 - patch '/posts/:id' -> handle edit post form submission (only editable by author of post)
 - delete '/posts/:id' -> handle deleting a particular post (only deletable by author of post)
 
+To generate a bunch of these files and get started, we can use corneal. Corneal has a help function that allows you to see all of your options. 
 
+```
+corneal help
+```
+Here are our options:
+```
+Commands:
+  corneal -v               # Show Corneal version number
+  corneal controller NAME  # Generate a controller
+  corneal help [COMMAND]   # Describe available commands or one specific command
+  corneal model NAME       # Generate a model
+  corneal new APP_PATH     # Creates a new Sinatra application
+  corneal scaffold NAME    # Generate a model with its associated views and controllers
+```
 
+The one we want here is the scaffold generator, this will create a model, migration, controller and views. It will also add the controller to the config.ru file. If we pass additional arguments after the name of the model, we can user the generator to add columns to our migration as well. The default column type is string, if we want another type, we can add a colon after the name of the column to specify the type. For example, content:text, author_id:integer.
+
+In our case we can run:
+
+```
+corneal scaffold Post title content:text author_id:integer
+```
+This will print something like this to the terminal:
+```
+create  app/models/post.rb
+create  db/migrate/20200827232626_create_posts.rb
+create  app/controllers/posts_controller.rb
+insert  config.ru
+create  app/views/posts
+create  app/views/posts/edit.html.erb
+create  app/views/posts/index.html.erb
+create  app/views/posts/new.html.erb
+create  app/views/posts/show.html.erb
+```
 Tasks
 
 
