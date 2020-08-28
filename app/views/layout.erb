@@ -16,11 +16,13 @@
   <body>
     <div class="wrapper">
       <nav>
+        <a href="/posts">Posts</a>
         <% if !logged_in? %>
           <a href="/login">Log In</a>
           <a href="/users/new">Sign Up</a>
         <% else %>
-          <form method="post" action="/logout">
+          <a href="/posts/new">New Post</a>
+          <form method="post" action="/logout" style="display: inline-block;">
             <input type="hidden" name="_method" value="delete" />
             <input type="submit" value="Log Out" />
           </form>
