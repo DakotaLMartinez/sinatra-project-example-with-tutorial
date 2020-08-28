@@ -558,7 +558,81 @@ For show we need to find a post using the id coming through the params hash (tha
 
 
 
+When we're building a form
 
+## Important understanding for Assessment
+
+**What determines where the browser sends a request upon submission?**
+
+method and action attribute values
+method is the http verb
+action is the path it's sent to.
+
+**What determines the keys in the params hash that appear in the controller upon form submission?**
+
+The value of the `name` attributes in your form inputs.
+
+
+When we add our form it'll look something like this:
+
+```html
+<h1>New Post</h1>
+<form method="post" action="/posts">
+  <p>
+    <div><label for="title">Title</label></div>
+    <input id="title" type="text" name="post[title]" />
+  </p>
+  <p>
+    <div><label for="content">content</label></div>
+    <textarea rows="8" cols="45" id="content" type="text" name="post[content]"></textarea>
+  
+  </p>
+  <input type="submit" value="Create Post" />
+</form>
+```
+
+The corresponding controller should look like this:
+
+```
+# GET: /posts/new -> new
+  get "/posts/new" do
+    @post = Post.new
+    erb :"/posts/new.html"
+  end
+
+  # POST: /posts -> create
+  post "/posts" do
+    # binding.pry
+    @post = current_user.posts.build(title: params[:post][:title],content:params[:post][:content])
+    if @post.save
+      redirect "/posts"
+    else
+      erb :"/posts/new.html"
+    end
+  end
+
+```
+
+In the view, we can handle displaying errors by copying this code from the railsguides for ActiveRecord Validations:
+
+```
+<% if @article.errors.any? %>
+  <div id="error_explanation">
+    <h2><%= pluralize(@article.errors.count, "error") %> prohibited this article from being saved:</h2>
+ 
+    <ul>
+    <% @article.errors.full_messages.each do |msg| %>
+      <li><%= msg %></li>
+    <% end %>
+    </ul>
+  </div>
+<% end %>
+```
+We'll want to replace @article with @post in our case, and the pluralize method should be removed and replaced with something like this:
+
+```
+<h2><%= @post.errors.count %> error(s) prohibited this post from being saved:</h2>
+```
 
 
 

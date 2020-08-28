@@ -1,1 +1,25 @@
-<h1>Insert the form to create a new instance of your model.</h1>
+<h1>New Post</h1>
+
+<% if @post.errors.any? %>
+  <div id="error_explanation">
+    <h2><%= @post.errors.count %> error(s) prohibited this post from being saved:</h2>
+ 
+    <ul>
+    <% @post.errors.full_messages.each do |msg| %>
+      <li><%= msg %></li>
+    <% end %>
+    </ul>
+  </div>
+<% end %>
+<form method="post" action="/posts">
+  <p>
+    <div><label for="title">Title</label></div>
+    <input id="title" type="text" name="post[title]" value="<%= @post.title %>" />
+  </p>
+  <p>
+    <div><label for="content">content</label></div>
+    <textarea rows="8" cols="45" id="content" type="text" name="post[content]"><%= @post.content %></textarea>
+  
+  </p>
+  <input type="submit" value="Create Post" />
+</form>
