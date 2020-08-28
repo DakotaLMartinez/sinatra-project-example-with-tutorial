@@ -2,6 +2,7 @@ class PostsController < ApplicationController
 
   # GET: /posts
   get "/posts" do
+    @posts = Post.all
     erb :"/posts/index.html"
   end
 
@@ -17,6 +18,7 @@ class PostsController < ApplicationController
 
   # GET: /posts/5
   get "/posts/:id" do
+    @post = Post.find(params[:id])
     erb :"/posts/show.html"
   end
 

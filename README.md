@@ -507,6 +507,55 @@ create  app/views/posts/show.html.erb
 ```
 Tasks
 
+We need to associate Users and Posts. 
+
+```ruby
+class Post < ActiveRecord::Base
+  belongs_to :author, class_name: "User" 
+  # adding class_name: "User" here tells activerecord to find a User instance associated with a post we call this method on, not an Author instance. The foreign key :author_id is inferred from the fact that we have belongs_to :author here. If the foreign key were something else, we'd also have to add foreign_key: "something_else_id" here.
+end
+
+class User < ActiveRecord::Base
+  has_secure_password
+  validates :email, presence: true, uniqueness: true
+  has_many :posts, foreign_key: "author_id"
+  # the foreign key would be assumed to be user_id because has_many is invoiked within the User class. Because our foreign key is actually author_id, we need to specify that in the option passed to has_many.
+end
+```
+
+To Add in index, we need to get all the Posts and then we can iterate over them in the corresponding view:
+
+```
+  # GET: /posts
+  get "/posts" do
+    @posts = Post.all
+    erb :"/posts/index.html"
+  end
+```
+
+```
+<h1>This is the Model's index page.</h1>
+<% @posts.each do |post| %>
+<p><a href="/posts/<%= post.id %>"><%= post.title %></a></p>
+<% end %>
+```
+
+For show we need to find a post using the id coming through the params hash (that's captured by the dynamic route) and then we can show the details in the show.html.erb view template.
+
+```
+  # GET: /posts/5
+  get "/posts/:id" do
+    @post = Post.find(params[:id])
+    erb :"/posts/show.html"
+  end
+```
+
+```
+<h1><%= @post.title %></h1>
+<p><%= @post.author.email %></p>
+<p><%= @post.content %></p>
+```
+
 
 
 
