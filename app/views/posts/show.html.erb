@@ -1,3 +1,12 @@
 <h1><%= @post.title %></h1>
 <p><%= @post.author.email %></p>
 <p><%= @post.content %></p>
+<% if authorize_post(@post) %>
+  <div>
+    <a href="/posts/<%= @post.id %>/edit"><button>Edit</button></a> 
+    <form method="post" action="/posts/<%= @post.id %>" style="display: inline-block;">
+      <input type="hidden" name="_method" value="delete" />
+      <input type="submit" value="Delete" />
+    </form>
+  </div>
+<% end %>
