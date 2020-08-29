@@ -866,8 +866,157 @@ end
 
 ```
 
+Let's build out the update functionality:
 
+```rb
+# PATCH: /posts/5 -> update
+patch "/posts/:id" do
+  set_post
+  
+  if @post.update(title: params[:post][:title], content:params[:post][:content])
+    flash[:success] = "Post successfully updated"
+    redirect "/posts/#{@post.id}"
+  else 
+    erb :"/posts/edit.html"
+  end
+end
+```
 
+We also need to make sure that only users who created a post are able to update/delete it. One way we can do this without having to repeat ourselves is to add a method that accepts a post as an argument and ensures that the logged in user has permissions to interact with that post. We could call this method `authorize_post(post)`. We'll also add a method to redirect a user if they're not authorized to perform an action:
+
+```rb
+def redirect_if_not_authorized
+  if !authorize_post(@post)
+    flash[:error] = "You don't have permission to do that action"
+    redirect "/posts"
+  end
+end
+
+def authorize_post(post)
+  current_user == post.author
+end
+```
+
+Once we have this method, we want to call it right before we do anything that only a user who is authorized on this post should be able to do. This is what our controller should look like:
+
+```rb
+class PostsController < ApplicationController
+
+  # GET: /posts -> index
+  get "/posts" do
+    @posts = Post.all
+    erb :"/posts/index.html"
+  end
+
+  # GET: /posts/new -> new
+  get "/posts/new" do
+    redirect "/login" if not logged_in?
+    @post = Post.new
+    erb :"/posts/new.html"
+  end
+
+  # POST: /posts -> create
+  post "/posts" do
+    redirect "/login" if not logged_in?
+    @post = current_user.posts.build(title: params[:post][:title], content:params[:post][:content])
+    if @post.save
+      redirect "/posts"
+    else
+      erb :"/posts/new.html"
+    end
+  end
+
+  # GET: /posts/5 -> show
+  get "/posts/:id" do
+    set_post
+    erb :"/posts/show.html"
+  end
+
+  # GET: /posts/5/edit -> edit
+  get "/posts/:id/edit" do
+    set_post
+    redirect_if_not_authorized
+    erb :"/posts/edit.html"
+  end
+
+  # PATCH: /posts/5 -> update
+  patch "/posts/:id" do
+    set_post
+    redirect_if_not_authorized
+    if @post.update(title: params[:post][:title], content:params[:post][:content])
+      flash[:success] = "Post successfully updated"
+      redirect "/posts/#{@post.id}"
+    else 
+      erb :"/posts/edit.html"
+    end
+  end
+
+  # DELETE: /posts/5 - destroy
+  delete "/posts/:id" do
+    set_post
+    redirect_if_not_authorized
+    @post.destroy
+    redirect "/posts"
+  end
+
+  private 
+
+  def set_post 
+    @post = Post.find_by_id(params[:id])
+    if @post.nil?
+      flash[:error] = "Couldn't find a Post with id: #{params[:id]}"
+      redirect "/posts"
+    end
+  end
+
+  def redirect_if_not_authorized
+    if !authorize_post(@post)
+      flash[:error] = "You don't have permission to do that action"
+      redirect "/posts"
+    end
+  end
+
+  def authorize_post(post)
+    current_user == post.author
+  end
+
+end
+
+```
+
+## Protecting Routes behind a login requirement
+
+To make sure users can only access routes that are protected when they are logged in, we can add a private method in the ApplicationController class:
+
+```rb
+def redirect_if_not_logged_in
+  if !logged_in?
+    flash[:error] = "You must be logged in to view that page"
+    redirect request.referrer || "/login"
+  end
+end
+```
+
+Once we have this method, we can call it in any controller action (route) where we want only logged in users to be able to visit.
+Now, we've got our CRUD functionality working, we can use some conditional logic in views to only display links/buttons when appropriate.
+
+For example, in `app/views/posts/show.html.erb`
+
+```html
+<!-- app/views/posts/show.html.erb -->
+<h1><%= @post.title %></h1>
+<p><%= @post.author.email %></p>
+<p><%= @post.content %></p>
+<% if authorize_post(@post) %>
+  <div>
+    <a href="/posts/<%= @post.id %>/edit"><button>Edit</button></a> 
+    <form method="post" action="/posts/<%= @post.id %>" style="display: inline-block;">
+      <input type="hidden" name="_method" value="delete" />
+      <input type="submit" value="Delete" />
+    </form>
+  </div>
+<% end %>
+```
 
 
 
