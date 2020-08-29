@@ -8,10 +8,16 @@ class ApplicationController < Sinatra::Base
     set :sessions, true
     set :session_secret, ENV["SESSION_SECRET"]
     set :method_override, true
+    register Sinatra::Flash
   end
 
   get "/" do
     erb :welcome
+  end
+
+  not_found do
+    flash[:error] = "Whoops! Couldn't find that route"
+    redirect "/posts"
   end
 
   private 

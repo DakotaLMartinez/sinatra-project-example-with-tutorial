@@ -634,6 +634,259 @@ We'll want to replace @article with @post in our case, and the pluralize method 
 <h2><%= @post.errors.count %> error(s) prohibited this post from being saved:</h2>
 ```
 
+## Adding an Edit Form
+To add an edit form to our application, we can use our new form as a template because of the choices we've made about displaying errors and making sure the values for our inputs reflect the values stored in our `@post` instance variable.
+
+So, we can copy our new.html.erb file into edit.html.erb and make just a couple of small changes:
+
+1. We need to change our header to "Edit Post"
+2. We need to add a methodoverride input to our form to send a patch request instead of a post request
+3. Change submit button value to `Update Post`
+4. We need to update the form action so that it makes a request to the update route.
+
+```html
+<h1>Edit Post</h1>
+
+<% if @post.errors.any? %>
+  <div id="error_explanation">
+    <h2><%= @post.errors.count %> error(s) prohibited this post from being saved:</h2>
+ 
+    <ul>
+    <% @post.errors.full_messages.each do |msg| %>
+      <li><%= msg %></li>
+    <% end %>
+    </ul>
+  </div>
+<% end %>
+<form method="post" action="/posts/<%= @post.id %>">
+  <input type="hidden" name="_method" value="patch" />
+  <p>
+    <div><label for="title">Title</label></div>
+    <input id="title" type="text" name="post[title]" value="<%= @post.title %>" />
+  </p>
+  <p>
+    <div><label for="content">content</label></div>
+    <textarea rows="8" cols="45" id="content" type="text" name="post[content]"><%= @post.content %></textarea>
+  
+  </p>
+  <input type="submit" value="Update Post" />
+</form>
+```
+
+## Adding Error handling for when we don't find a record
+If we hit an issue where a record is not found using `Post.find_by_id` we can add a method that finds the record and redirects with an error message if the record is not found. In order to display a message after a redirect we need to add some middleware that will allow us to write to cookies some data that will persist for a single request/response cycle and then be cleared.
+
+To do this, there is a gem called `sinatra-flash` which will allow us to add this functionality.
+
+in our Gemfile, let's add:
+
+```ruby
+gem 'sinatra-flash'
+```
+
+After adding this to the gemfile, run 
+```
+bundle install
+```
+
+Next, we want to register `Sinatra::Flash` in our controller configuration
+
+```ruby
+# app/controllers/application_controller.rb
+configure do
+  set :public_folder, 'public'
+  set :views, 'app/views'
+  set :sessions, true
+  set :session_secret, ENV["SESSION_SECRET"]
+  set :method_override, true
+  register Sinatra::Flash
+end
+```
+
+Finally, we want to add the `styled_flash` view helper to our `layout.erb` file, so we can use flash messages to display text to our users after redirects throughout the application.
+
+```
+<%= styled_flash %>
+```
+
+So our `layout.erb` file looks like this: 
+
+```html
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+
+    <title>Authentication</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <nav>
+        <a href="/posts">Posts</a>
+        <% if !logged_in? %>
+          <a href="/login">Log In</a>
+          <a href="/users/new">Sign Up</a>
+        <% else %>
+          <a href="/posts/new">New Post</a>
+          <form method="post" action="/logout" style="display: inline-block;">
+            <input type="hidden" name="_method" value="delete" />
+            <input type="submit" value="Log Out" />
+          </form>
+        <% end %>
+      </nav>
+      <%= styled_flash %>
+        <%= yield %>
+
+      <footer class="branding">
+        <small>&copy; 2020 <strong>Authentication</strong></small>
+      </footer>
+    </div>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+    <!--[if lt IE 7]>
+      <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.2/CFInstall.min.js"></script>
+      <script>window.attachEvent("onload",function(){CFInstall.check({mode:"overlay"})})</script>
+    <![endif]-->
+  </body>
+</html>
+
+```
+
+Finally we add a private method to the PostsController, that will find a Post based on params[:id] and then redirect to /posts with an error message if we don't find a Post with that id
+
+```ruby
+def set_post 
+  @post = Post.find_by_id(params[:id])
+  if @post.nil?
+    flash[:error] = "Couldn't find a Post with id: #{params[:id]}"
+    redirect "/posts"
+  end
+end
+```
+
+To get this working, we need to call this method from the routes in our controller that need to find a Post based on an id in params:
+
+```rb
+  # GET: /posts/5 -> show
+  get "/posts/:id" do
+    set_post
+    erb :"/posts/show.html"
+  end
+
+  # GET: /posts/5/edit -> edit
+  get "/posts/:id/edit" do
+    set_post
+    erb :"/posts/edit.html"
+  end
+
+  # PATCH: /posts/5 -> update
+  patch "/posts/:id" do
+    set_post
+    redirect "/posts/:id"
+  end
+
+  # DELETE: /posts/5 - destroy
+  delete "/posts/:id" do
+    set_post
+    redirect "/posts"
+  end
+```
+
+So our posts controller now looks like this:
+
+```rb
+class PostsController < ApplicationController
+
+  # GET: /posts -> index
+  get "/posts" do
+    @posts = Post.all
+    erb :"/posts/index.html"
+  end
+
+  # GET: /posts/new -> new
+  get "/posts/new" do
+    redirect "/login" if not logged_in?
+    @post = Post.new
+    erb :"/posts/new.html"
+  end
+
+  # POST: /posts -> create
+  post "/posts" do
+    redirect "/login" if not logged_in?
+    @post = current_user.posts.build(title: params[:post][:title],content:params[:post][:content])
+    if @post.save
+      redirect "/posts"
+    else
+      erb :"/posts/new.html"
+    end
+  end
+
+  # GET: /posts/5 -> show
+  get "/posts/:id" do
+    set_post
+    erb :"/posts/show.html"
+  end
+
+  # GET: /posts/5/edit -> edit
+  get "/posts/:id/edit" do
+    set_post
+    erb :"/posts/edit.html"
+  end
+
+  # PATCH: /posts/5 -> update
+  patch "/posts/:id" do
+    set_post
+    redirect "/posts/:id"
+  end
+
+  # DELETE: /posts/5 - destroy
+  delete "/posts/:id" do
+    set_post
+    redirect "/posts"
+  end
+
+  private 
+
+  def set_post 
+    @post = Post.find_by_id(params[:id])
+    if @post.nil?
+      flash[:error] = "Couldn't find a Post with id: #{params[:id]}"
+      redirect "/posts"
+    end
+  end
+end
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
