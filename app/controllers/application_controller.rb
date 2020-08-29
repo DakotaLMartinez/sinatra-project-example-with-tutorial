@@ -12,7 +12,8 @@ class ApplicationController < Sinatra::Base
   end
 
   get "/" do
-    erb :welcome
+    @posts = Post.all
+    erb :"/posts/index.html"
   end
 
   not_found do
@@ -28,6 +29,13 @@ class ApplicationController < Sinatra::Base
 
   def logged_in?
     !!current_user
+  end
+
+  def redirect_if_not_logged_in
+    if !logged_in?
+      flash[:error] = "You must be logged in to view that page"
+      redirect request.referrer || "/login"
+    end
   end
 
 end
