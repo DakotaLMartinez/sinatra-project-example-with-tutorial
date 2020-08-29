@@ -19,6 +19,14 @@
     line-height: 18px;
   }
 
+  .error {
+    color: red;
+  }
+
+  .success {
+    color: rgb(32, 212, 32);
+  }
+
   .wrapper {
     background: #fff;
     -moz-box-shadow: 0 0 10px rgba(0,0,0,.3);
